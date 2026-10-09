@@ -217,6 +217,7 @@ jobs:
           watch_title \
           2hlollipop \
           profiles \
+          basal lock\
           negative_insulin
 
           # the final customization listed above CANNOT have a continuation character
