@@ -90,6 +90,22 @@ jobs:
         if: |
           steps.workflow-permission.outputs.has_permission == 'true' &&
           (vars.SCHEDULED_BUILD != 'false' || vars.SCHEDULED_SYNC != 'false')
+            if ! scopes=$(curl -sS -f -I -H "Authorization: token $GH_PAT" https://api.github.com | { grep -i '^x-oauth-scopes:' || true; } | cut -d ' ' -f2- | tr -d '\r'); then
+              failed=true
+              if [ $unknown_format ]; then
+                echo "::error::Unable to connect to GitHub using the GH_PAT secret. Verify that it is set correctly (including the 'ghp_' or 'github_pat_' prefix) and try again."
+              else
+                echo "::error::Unable to connect to GitHub using the GH_PAT secret. Verify that the token exists and has not expired at https://github.com/settings/tokens. If necessary, regenerate or create a new token (and update the secret), then try again."
+              fi
+            elif [[ $scopes =~ workflow ]]; then
+              echo "The GH_PAT secret has repo and workflow permissions."
+              echo "has_permission=true" >> $GITHUB_OUTPUT
+            elif [[ $scopes =~ repo ]]; then
+              echo "The GH_PAT secret has repo (but not workflow) permissions."
+            elif [ $provides_scopes ]; then
+              failed=true
+              if [ -z "$scopes" ]; then
+                echo "The GH_PAT secret is valid and can be used to connect to GitHub, but it does not provide any permission scopes."
         uses: actions/checkout@v5
         with:
           token: ${{ secrets.GH_PAT }}
@@ -243,6 +259,10 @@ jobs:
           watch_title \
           2hlollipop \
           profiles \
+          negative_insulin
+
+          # the final customization listed above CANNOT have a continuation character
+          # more customizations can be pasted after this line
           negative_insulin
 
           # the final customization listed above CANNOT have a continuation character
